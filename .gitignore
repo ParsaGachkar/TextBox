@@ -3,6 +3,7 @@ obj/
 /packages/
 riderModule.iml
 /_ReSharper.Caches/
+TestResults/
 # Rider IDE (nested .idea path + user settings)
 .idea/
 *.DotSettings.user

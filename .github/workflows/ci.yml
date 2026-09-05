@@ -21,6 +21,9 @@ jobs:
 
   build-test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
     steps:
       - uses: actions/checkout@v4
 
@@ -44,7 +47,16 @@ jobs:
         run: dotnet build TextBox.slnx --nologo
 
       - name: Test
-        run: dotnet test TextBox.slnx --no-build
+        run: dotnet test TextBox.slnx --no-build --logger "trx;LogFileName=test-results.trx" --results-directory ./TestResults
+
+      - name: Publish test results
+        uses: dorny/test-reporter@v2
+        if: success() || failure()
+        with:
+          name: xUnit Tests
+          path: 'TestResults/**/*.trx'
+          reporter: dotnet-trx
+          fail-on-error: 'true'
 
   docker:
     runs-on: ubuntu-latest

@@ -1,5 +1,7 @@
 # TextBox
 
+[![CI](https://github.com/ParsaGachkar/TextBox/actions/workflows/ci.yml/badge.svg)](https://github.com/ParsaGachkar/TextBox/actions/workflows/ci.yml)
+
 Simple SMS mocking API + dashboard - C# .NET + Blazor. Ship as a Docker image for local/dev testing and consume via a NuGet SDK.
 
 > **Status: single Blazor project** - `src/TextBox/TextBox.csproj` hosts both the SMS mock API (`/api/messages`) and the dashboard (`/`). `dotnet sln migrate` already run - use `TextBox.slnx`.
