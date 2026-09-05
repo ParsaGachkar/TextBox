@@ -1,0 +1,118 @@
+@page "/conversation/{PhoneNumber}"
+@rendermode InteractiveServer
+@using System.Text.Json
+@using TextBox.Models
+@using TextBox.Services
+@inject IMessageStore Store
+@inject NavigationManager Nav
+@inject MessageLiveFeed Feed
+@implements IDisposable
+
+<PageTitle>@PhoneNumber</PageTitle>
+
+<div class="navbar bg-base-100 border-b border-base-200 min-h-0 px-2 py-1 gap-1">
+    <a href="" class="btn btn-ghost btn-sm btn-square" aria-label="Back to conversations">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+    </a>
+    <span class="font-semibold truncate">@PhoneNumber</span>
+</div>
+<div class="flex-1 overflow-y-auto">
+    <div class="p-3 flex flex-col gap-1">
+        @if (messages.Count == 0)
+        {
+            <p class="text-sm opacity-60 text-center py-8">No messages for @PhoneNumber yet.</p>
+        }
+        else
+        {
+            @foreach (var m in messages)
+            {
+                <div class="chat chat-start">
+                    <div class="chat-header">
+                        @(string.IsNullOrEmpty(m.From) ? "Unknown" : m.From)
+                        <time class="text-xs opacity-50">@m.CreatedAt.ToLocalTime().ToString("g")</time>
+                    </div>
+                    <div class="chat-bubble cursor-pointer" @onclick="() => selected = m">@m.Body</div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@if (selected is not null)
+{
+    <div class="modal modal-open phone-modal">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg">Message details</h3>
+            <dl class="mt-3 space-y-1 text-sm">
+                <div class="flex gap-2"><dt class="opacity-60 w-20 shrink-0">Id</dt><dd class="break-all"><code>@selected.Id</code></dd></div>
+                <div class="flex gap-2"><dt class="opacity-60 w-20 shrink-0">To</dt><dd>@selected.To</dd></div>
+                <div class="flex gap-2"><dt class="opacity-60 w-20 shrink-0">From</dt><dd>@(string.IsNullOrEmpty(selected.From) ? "—" : selected.From)</dd></div>
+                <div class="flex gap-2"><dt class="opacity-60 w-20 shrink-0">Received</dt><dd>@selected.CreatedAt.ToLocalTime().ToString("u")</dd></div>
+                <div class="flex gap-2"><dt class="opacity-60 w-20 shrink-0">Body</dt><dd class="break-words">@selected.Body</dd></div>
+            </dl>
+            <pre class="mt-3 p-2 bg-base-200 rounded-box text-xs overflow-x-auto">@JsonSerializer.Serialize(selected, new JsonSerializerOptions { WriteIndented = true })</pre>
+            <div class="modal-action">
+                <button class="btn" @onclick="() => selected = null">Close</button>
+            </div>
+        </div>
+        <div class="modal-backdrop" @onclick="() => selected = null"></div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string PhoneNumber { get; set; } = string.Empty;
+
+    private List<SmsMessage> messages = [];
+    private SmsMessage? selected;
+
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
+    protected override Task OnInitializedAsync()
+    {
+        Feed.MessageReceived += OnLiveMessageAsync;
+        Feed.MessagesCleared += OnLiveClearedAsync;
+        if (HttpContext is null)
+            _ = Feed.EnsureStartedAsync();
+        return Task.CompletedTask;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        selected = null;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        messages = (await Store.ListAsync())
+            .Where(m => m.To == PhoneNumber)
+            .OrderBy(m => m.CreatedAt)
+            .ToList();
+    }
+
+    private Task OnLiveMessageAsync(SmsMessage _) => ReloadAndRenderAsync();
+
+    private Task OnLiveClearedAsync() => InvokeAsync(async () =>
+    {
+        await LoadAsync();
+        if (messages.Count == 0)
+            Nav.NavigateTo("/");
+        else
+            StateHasChanged();
+    });
+
+    private Task ReloadAndRenderAsync() =>
+        InvokeAsync(async () =>
+        {
+            await LoadAsync();
+            StateHasChanged();
+        });
+
+    public void Dispose()
+    {
+        Feed.MessageReceived -= OnLiveMessageAsync;
+        Feed.MessagesCleared -= OnLiveClearedAsync;
+    }
+}

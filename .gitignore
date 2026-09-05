@@ -1,0 +1,14 @@
+bin/
+obj/
+/packages/
+riderModule.iml
+/_ReSharper.Caches/
+# Rider IDE (nested .idea path + user settings)
+.idea/
+*.DotSettings.user
+# LiteDB local data (MessageStore:Path)
+/src/TextBox/Data/
+*.db
+# Frontend toolchain + generated CSS
+node_modules/
+/src/TextBox/wwwroot/css/

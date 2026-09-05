@@ -1,0 +1,56 @@
+@using TextBox.Auth
+@inject ApiKeyService ApiKey
+@inject IJSRuntime JS
+
+<div class="w-full max-w-md flex flex-col gap-4">
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title">API key</h2>
+            @if (!string.IsNullOrWhiteSpace(ApiKey.Key))
+            {
+                <p class="text-sm opacity-70">Send requests with this header:</p>
+                <div class="flex items-center gap-2">
+                    <code class="bg-base-200 rounded-box p-2 text-xs break-all grow">Authorization: Bearer @ApiKey.Key</code>
+                    <button class="btn btn-ghost btn-sm btn-square shrink-0" @onclick="CopyKeyAsync" aria-label="Copy API key" title="@(copied ? "Copied!" : "Copy API key")">
+                        @if (copied)
+                        {
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+                        }
+                        else
+                        {
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>
+                        }
+                    </button>
+                </div>
+            }
+            else
+            {
+                <p class="text-sm opacity-70">No key configured — the API is open. Set <code>ApiKey:Key</code> in <code>appsettings.json</code> to require one.</p>
+            }
+        </div>
+    </div>
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title">Quick guide</h2>
+            <ul class="text-sm space-y-2 opacity-80 list-disc pl-5">
+                <li>Browse test inboxes in the phone; search filters by number.</li>
+                <li>Open a conversation to read messages; click a bubble for the raw payload.</li>
+                <li>Send via <code>POST /api/messages</code> — full reference at <a href="scalar" target="_blank" rel="noopener" class="link">/scalar</a>.</li>
+                <li>Messages persist in LiteDB (<code>Data/textbox.db</code>).</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool copied;
+
+    private async Task CopyKeyAsync()
+    {
+        var key = ApiKey.Key;
+        if (string.IsNullOrWhiteSpace(key))
+            return;
+        await JS.InvokeVoidAsync("textBoxClipboard.copy", key);
+        copied = true;
+    }
+}

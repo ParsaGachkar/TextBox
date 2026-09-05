@@ -1,0 +1,20 @@
+# Build outputs
+bin/
+obj/
+out/
+TestResults/
+
+# Frontend install (reinstalled with npm ci during docker build)
+node_modules/
+
+# Local/runtime data
+Data/
+*.db
+
+# VCS / CI / IDE
+.git/
+.github/
+.idea/
+.vs/
+*.user
+*.suo

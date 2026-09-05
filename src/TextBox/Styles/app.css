@@ -1,0 +1,47 @@
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes: light --default, dark;
+}
+
+/* TextBox themes: built-ins with Blazor-purple primary, customized per docs
+   (unspecified values are inherited from the original themes). */
+@plugin "daisyui/theme" {
+  name: "light";
+  --color-primary: #512bd4;
+  --color-primary-content: #fff;
+}
+
+@plugin "daisyui/theme" {
+  name: "dark";
+  --color-primary: #512bd4;
+  --color-primary-content: #fff;
+}
+
+/* Constrain the daisyUI modal to the phone frame instead of the viewport.
+   Unlayered CSS wins over daisyUI's layered `position: fixed`. */
+.phone-modal {
+  position: absolute;
+  inset: 0;
+}
+
+/* Blazor error UI (replaces the old Bootstrap app.css). */
+#blazor-error-ui {
+  color-scheme: light only;
+  background: lightyellow;
+  bottom: 0;
+  box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+  box-sizing: border-box;
+  display: none;
+  left: 0;
+  padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+  position: fixed;
+  width: 100%;
+  z-index: 1000;
+}
+
+#blazor-error-ui .dismiss {
+  cursor: pointer;
+  position: absolute;
+  right: 0.75rem;
+  top: 0.5rem;
+}

@@ -1,0 +1,111 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@using TextBox.Models
+@using TextBox.Services
+@inject IMessageStore Store
+@inject NavigationManager Nav
+@inject MessageLiveFeed Feed
+@implements IDisposable
+
+<PageTitle>TextBox</PageTitle>
+
+<div class="bg-base-100 border-b border-base-200 px-3 py-2 flex items-center gap-2">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-60 shrink-0"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
+    <label class="floating-label grow">
+        <span>Search</span>
+        <input type="text" placeholder="Search" class="input input-sm input-bordered w-full" @bind="search" @bind:event="oninput" @bind:after="RefreshAsync" />
+    </label>
+</div>
+<div class="flex-1 overflow-y-auto">
+    <div class="p-3">
+        <div class="flex items-center justify-between mb-2">
+            <h1 class="text-lg font-bold">Messages</h1>
+            <div class="flex gap-1">
+                <button class="btn btn-ghost btn-xs" @onclick="RefreshAsync">Refresh</button>
+                <button class="btn btn-ghost btn-xs text-error" @onclick="ClearAsync">Clear all</button>
+            </div>
+        </div>
+
+        @if (conversations.Count == 0)
+        {
+            <p class="text-sm opacity-60 text-center py-8">No messages yet.<br />Send one via <code>POST /api/messages</code>.</p>
+        }
+        else
+        {
+            <ul class="list">
+                @foreach (var c in conversations)
+                {
+                    <li class="list-row items-center hover:bg-base-200 cursor-pointer" @onclick="() => OpenConversation(c.To)">
+                        <div>
+                            <div class="avatar avatar-placeholder">
+                                <div class="bg-primary text-primary-content rounded-full w-10">
+                                    <span class="text-xs">@c.Count</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="font-semibold truncate">@c.To</div>
+                            <div class="text-xs opacity-60 truncate">@c.Last.Body</div>
+                        </div>
+                        <div class="text-xs opacity-60 whitespace-nowrap">@c.Last.CreatedAt.ToLocalTime().ToString("g")</div>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+</div>
+
+@code {
+    private List<ConversationVM> conversations = [];
+    private sealed record ConversationVM(string To, SmsMessage Last, int Count);
+    private string? search;
+
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Feed.MessageReceived += OnLiveMessageAsync;
+        Feed.MessagesCleared += OnLiveClearedAsync;
+        if (HttpContext is null)
+            _ = Feed.EnsureStartedAsync();
+        await RefreshAsync();
+    }
+
+    private Task OnLiveMessageAsync(SmsMessage _) => RefreshAndRenderAsync();
+
+    private Task OnLiveClearedAsync() => RefreshAndRenderAsync();
+
+    private Task RefreshAndRenderAsync() =>
+        InvokeAsync(async () =>
+        {
+            await RefreshAsync();
+            StateHasChanged();
+        });
+
+    private async Task RefreshAsync()
+    {
+        var messages = await Store.ListAsync();
+        conversations = messages
+            .GroupBy(m => m.To)
+            .Select(g => new ConversationVM(g.Key, g.OrderByDescending(m => m.CreatedAt).First(), g.Count()))
+            .Where(c => string.IsNullOrWhiteSpace(search) || c.To.Contains(search, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(c => c.Last.CreatedAt)
+            .ToList();
+    }
+
+    private void OpenConversation(string to) =>
+        Nav.NavigateTo($"conversation/{Uri.EscapeDataString(to)}");
+
+    private async Task ClearAsync()
+    {
+        await Store.ClearAsync();
+        await RefreshAsync();
+    }
+
+    public void Dispose()
+    {
+        Feed.MessageReceived -= OnLiveMessageAsync;
+        Feed.MessagesCleared -= OnLiveClearedAsync;
+    }
+}
