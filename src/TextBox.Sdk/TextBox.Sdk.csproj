@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- netstandard2.0 defaults to C# 7.3; NSwag output needs modern C#. -->
+    <!-- Hand-written sources still use conservative syntax for compat. -->
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>TextBox.Sdk</RootNamespace>
+    <!-- NuGet identity (repo-safe metadata only; feed-side settings live on nuget.org) -->
+    <PackageId>TextBox.Sdk</PackageId>
+    <Version>0.1.0</Version>
+    <Title>TextBox.Sdk</Title>
+    <Authors>ParsaG72</Authors>
+    <Description>Typed .NET client for the TextBox SMS mock API (NSwag-generated).</Description>
+    <PackageTags>sms;mock;testing;textbox</PackageTags>
+    <RepositoryType>git</RepositoryType>
+    <!-- No RepositoryUrl yet: this repo has no remote. Add it once one exists. -->
+    <!-- No PackageLicenseExpression yet: repo LICENSE is TBD. -->
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- STJ is not in-box for netstandard2.0 (NSwag-generated DTOs need it) -->
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+    <!-- DataAnnotations (Required on generated DTOs) is not in-box for netstandard2.0 -->
+    <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
+    <!-- For the optional AddTextBoxClient() DI extension only -->
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="icon.png" Pack="true" PackagePath="" />
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+</Project>

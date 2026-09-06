@@ -12,6 +12,7 @@ RUN apt-get update \
 WORKDIR /src
 COPY TextBox.slnx ./
 COPY src/TextBox/TextBox.csproj src/TextBox/
+COPY src/TextBox.Sdk/TextBox.Sdk.csproj src/TextBox.Sdk/
 COPY src/TextBox/package.json src/TextBox/package-lock.json src/TextBox/
 COPY tests/TextBox.Tests/TextBox.Tests.csproj tests/TextBox.Tests/
 RUN dotnet restore TextBox.slnx

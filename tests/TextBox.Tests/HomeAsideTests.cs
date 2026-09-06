@@ -55,6 +55,19 @@ public class HomeAsideTests : BunitContext
     }
 
     [Fact]
+    public void ShowsSdkCard_WithInstallAndGuideLink()
+    {
+        GivenKey(null);
+
+        var cut = Render<HomeAside>();
+
+        Assert.Contains(".NET SDK", cut.Markup);
+        Assert.Contains("dotnet add package TextBox.Sdk", cut.Markup);
+        var sdk = cut.Find("a[href='sdk']");
+        Assert.Equal("_blank", sdk.GetAttribute("target"));
+    }
+
+    [Fact]
     public void CopyButton_CopiesRawKey()
     {
         GivenKey("secret-abc");

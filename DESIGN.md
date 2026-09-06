@@ -26,24 +26,47 @@ when adding or changing any `.razor`/CSS.
 - Toggle: `Components/Layout/ThemeToggle.razor` (navbar, sun/moon swap). State syncs via `window.textBoxTheme.get()/set()` in `wwwroot/js/theme.js`, loaded in `App.razor` **before** `blazor.web.js`.
 - Rule: pages/components must use daisyUI semantic tokens (`bg-base-100`, `text-base-content`, `bg-primary`, `text-error`, `border-base-200`, …) — never hard-code light-mode colors — or dark mode breaks.
 
-## 3. Layout contract (`Components/Layout/MainLayout.razor`)
+## 3. Layout contracts
 
-The layout is a **static shell, identical on every page**: no `@code`, no
-injected services, no route checks. Do not add any.
+Two shells share the navbar and error UI via reusable components — do not
+duplicate that markup, extend the shared ones:
+
+- `Components/Layout/TopNavbar.razor` — brand + `ThemeToggle` + SDK + API-docs
+  links (both `target _blank`: `/sdk` internal guide, `/scalar` external docs).
+  Static, no `@code`, no services.
+- `Components/Layout/BlazorErrorUi.razor` — the `#blazor-error-ui` div.
+  Render once per layout (its styles live in `Styles/app.css`).
+
+### 3a. `MainLayout.razor` (phone shell — default for `/`, `/conversation/…`)
+
+Static shell, identical on every phone page: no `@code`, no injected
+services, no route checks. Do not add any.
 
 ```
-navbar (brand + ThemeToggle + API docs link, target _blank → /scalar)
+TopNavbar
 └── content row (flex-col on mobile, lg:flex-row on desktop, phone first)
     ├── .mockup-phone
     │   ├── .mockup-phone-camera
     │   └── .mockup-phone-display (.flex.flex-col.relative + pt-[15%], bg-base-100)
     │       └── @Body (each page renders its own bar + scroll content)
     ├── .divider.lg:divider-horizontal (daisyUI divider splitter)
-    └── <HomeAside /> (API key card + quick-guide card)
+    └── <HomeAside /> (API key + quick-guide + SDK cards)
 ```
 
 Pages own everything inside the display: `Home.razor` renders the search
 bar + list, `Conversation.razor` the back bar + chat + modal.
+
+### 3b. `DocsLayout.razor` (prose shell — opt in via `@layout DocsLayout`)
+
+Full-width docs shell, no phone mockup, no aside:
+
+```
+TopNavbar
+└── main (max-w-3xl, centered)
+    └── article.card > .card-body > @Body
+```
+
+Docs pages own everything inside the card body (`Sdk.razor`).
 
 - There is no sidebar/`NavMenu` — do not reintroduce one.
 - Notch clearance: `pt-[15%]` on the display. The camera pill bottom sits at ~6.7% of phone height ≈ 14% of display width (fixed 462:978 aspect ratio), and `%` padding is width-relative, so this clears the notch at any size. If daisyUI changes the mockup geometry, recompute.
@@ -55,6 +78,7 @@ bar + list, `Conversation.razor` the back bar + chat + modal.
 |---|---|---|
 | `/` | `Components/Pages/Home.razor` (`InteractiveServer`) | Group messages by `To` (newest conversation first); daisyUI `ul.list` rows — count avatar (`bg-primary` circle), number + last-body snippet (truncate), timestamp; row click → `conversation/{url-escaped number}` via `NavigationManager`. Filter by a local `search` field (number substring, ordinal-ignore-case, `@bind:event="oninput"` + `@bind:after`). Keep Refresh / Clear-all ghost buttons. Empty state mentions `POST /api/messages`. Renders `<HomeAside />` beside the phone. |
 | `/conversation/{PhoneNumber}` | `Components/Pages/Conversation.razor` (`InteractiveServer`) | Exact `To == PhoneNumber` match, oldest-first `chat chat-start` bubbles; header = `From ?? "Unknown"` + local timestamp. Click bubble → detail modal. Reload data in `OnParametersSetAsync` (route-param navigation reuses the component). |
+| `/sdk` | `Components/Pages/Sdk.razor` (`@layout DocsLayout`, `InteractiveServer`) | Full-width SDK guide (install, manual + DI usage, key behavior, methods table, `/scalar` link). Prose inside the docs card — headings + `pre` blocks with `overflow-x-auto`. |
 | `/scalar` | Scalar middleware (`Program.cs`) | External docs page, linked from navbar. Mapped in **all** environments (Docker runs as Production). Scalar JS comes from CDN — needs browser internet. |
 
 ## 5. Component contracts

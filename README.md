@@ -1,10 +1,12 @@
+<p align="center"><img src="branding-assets/TextBoxLogo%20-%20256.png" width="128" alt="TextBox logo" /></p>
+
 # TextBox
 
 [![CI](https://github.com/ParsaGachkar/TextBox/actions/workflows/ci.yml/badge.svg)](https://github.com/ParsaGachkar/TextBox/actions/workflows/ci.yml)
 
 Simple SMS mocking API + dashboard - C# .NET + Blazor. Ship as a Docker image for local/dev testing and consume via a NuGet SDK.
 
-> **Status: single Blazor project** - `src/TextBox/TextBox.csproj` hosts both the SMS mock API (`/api/messages`) and the dashboard (`/`). `dotnet sln migrate` already run - use `TextBox.slnx`.
+> **Status: Blazor host + SDK classlib** - `src/TextBox/TextBox.csproj` hosts both the SMS mock API (`/api/messages`) and the dashboard (`/`), `src/TextBox.Sdk/TextBox.Sdk.csproj` is the NSwag-generated NuGet client. `dotnet sln migrate` already run - use `TextBox.slnx`.
 
 ## What it does
 
@@ -13,6 +15,12 @@ Simple SMS mocking API + dashboard - C# .NET + Blazor. Ship as a Docker image fo
 - **API docs** - interactive Scalar reference at `/scalar` (OpenAPI at `/openapi/v1.json`).
 - **Docker image** - one-command `docker run` for CI or local dev.
 - **NuGet SDK** - typed client to integrate tests/apps (`TextBox.Sdk`).
+
+## Screenshots
+
+| Light | Dark |
+|---|---|
+| ![Phone dashboard, light theme](branding-assets/screenshot-light.png) | ![Phone dashboard, dark theme](branding-assets/screenshot-dark.png) |
 
 ## Tech Stack
 
@@ -121,44 +129,63 @@ docker run --rm -p 8080:8080 `
 ## CI/CD
 
 `.github/workflows/ci.yml` runs on pushes/PRs to `master`: build, tests,
-then a Docker build. Pushes to `master` also push the image to
-`ghcr.io/<owner>/textbox` (`:latest` + `:sha-<commit>`).
+SDK pack (uploaded as an artifact), then a Docker build. Pushes to `master`
+also push the image to `ghcr.io/<owner>/textbox` (`:latest` + `:sha-<commit>`).
+Pushing a `textbox-sdk-v*` tag publishes the SDK to NuGet via trusted publishing (OIDC, no stored key).
 
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Commit messages and PR titles must
 follow Conventional Commits (enforced on PRs by CI).
 
-## NuGet SDK (planned)
+## NuGet SDK
+
+Typed client (`TextBox.Sdk`, `netstandard2.0`, NSwag-generated) with full setup at `/sdk`:
+
+> Not published to any feed yet — pack locally or grab the CI artifact until one is configured.
+
+```powershell
+dotnet add package TextBox.Sdk
+```
+
+Consume (no DI required — the key is optional, omit it when the API is open):
+
+```csharp
+var client = new TextBoxClient(new TextBoxOptions
+{
+    BaseAddress = "http://localhost:8080",
+    ApiKey = "secret-1",
+});
+var sent = await client.SendAsync(SendSmsRequest.Create("+123", "hello"));
+var inbox = await client.ListAsync();
+```
+
+Or with Microsoft DI: `services.AddTextBoxClient("http://localhost:8080", apiKey: "secret-1");`
+
+Pack / regenerate (contributors):
 
 ```powershell
 dotnet pack src/TextBox.Sdk/TextBox.Sdk.csproj -c Release
-# or push to feed
-dotnet nuget push src/TextBox.Sdk/bin/Release/*.nupkg --source <feed>
-```
-
-Consume:
-
-```csharp
-var client = new TextBoxClient("http://localhost:8080");
-await client.SendAsync(new SmsMessage { To = "+123", Body = "hello" });
+./scripts/Update-OpenApiSnapshot.ps1  # re-export spec (key configured, keeps Bearer scheme)
+./scripts/Regen-SdkClient.ps1         # regenerate committed Generated/
+./scripts/Set-SdkVersion.ps1 -Version 0.2.0
 ```
 
 ## Project Structure (target)
 
 ```
 TextBox.slnx  # use .slnx (migrated from .sln via `dotnet sln migrate`)
+├── branding-assets/    # logo source (SVG + PNG) + README screenshots
 ├── src/
-│   └── TextBox/          # Blazor dashboard (/) + SMS mock API (/api/messages)
-│       ├── Components/   # Blazor UI (Pages/Home.razor = inbox)
-│       ├── Endpoints/    # Minimal API (MessageEndpoints)
-│       ├── Models/       # SmsMessage / SendSmsRequest
-│       └── Services/     # IMessageStore (LiteDB), options, validators
+│   ├── TextBox/        # Blazor dashboard (/) + SMS mock API (/api/messages)
+│   │   ├── Components/ # Blazor UI (Pages/Home.razor = inbox, Pages/Sdk.razor = SDK docs)
+│   │   ├── Endpoints/  # Minimal API (MessageEndpoints)
+│   │   ├── Models/     # SmsMessage / SendSmsRequest
+│   │   └── Services/   # IMessageStore (LiteDB), options, validators
+│   └── TextBox.Sdk/    # NuGet client (NSwag-generated + partials, netstandard2.0)
 └── tests/
-    └── TextBox.Tests/    # xUnit/NSubstitute unit + bUnit UI tests
+    └── TextBox.Tests/  # xUnit/NSubstitute unit + bUnit UI tests
 ```
-
-`TextBox.Sdk` NuGet client planned - not scaffolded yet.
 
 ## Commands
 
@@ -168,6 +195,11 @@ TextBox.slnx  # use .slnx (migrated from .sln via `dotnet sln migrate`)
 | Build all | `dotnet build TextBox.slnx` |
 | Run app (API + dashboard) | `dotnet run --project src/TextBox/TextBox.csproj` |
 | Run tests | `dotnet test TextBox.slnx` |
+| Pack SDK | `dotnet pack src/TextBox.Sdk/TextBox.Sdk.csproj -c Release` |
+| Bump SDK version | `./scripts/Set-SdkVersion.ps1 -Version 0.2.0` |
+| Refresh OpenAPI snapshot | `./scripts/Update-OpenApiSnapshot.ps1` |
+| Regenerate SDK client | `./scripts/Regen-SdkClient.ps1` |
+| Seed demo data | `./scripts/Seed-FakeData.ps1 -ApiKey <key> -ClearFirst` |
 
 PowerShell 5.1 on Windows - use `workdir` param in tooling instead of `cd`.
 

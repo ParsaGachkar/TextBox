@@ -1,0 +1,28 @@
+{
+  "runtime": "Net100",
+  "documentGenerator": {
+    "fromDocument": {
+      "json": "openapi.json"
+    }
+  },
+  "codeGenerators": {
+    "openApiToCSharpClient": {
+      "className": "TextBoxClient",
+      "namespace": "TextBox.Sdk",
+      "output": "Generated/TextBoxClient.g.cs",
+      "operationGenerationMode": "SingleClientFromOperationId",
+      "generateClientInterfaces": true,
+      "injectHttpClient": true,
+      "useBaseUrl": true,
+      "generateBaseUrlProperty": true,
+      "generateSyncMethods": false,
+      "jsonLibrary": "SystemTextJson",
+      "dateTimeType": "System.DateTimeOffset",
+      "dateType": "System.DateTimeOffset",
+      "classStyle": "Record",
+      "generateNativeRecords": true,
+      "generateExceptionClasses": true,
+      "exceptionClass": "TextBoxApiException"
+    }
+  }
+}

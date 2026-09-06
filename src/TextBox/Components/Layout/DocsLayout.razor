@@ -1,0 +1,16 @@
+@inherits LayoutComponentBase
+
+@* Full-width prose shell for docs pages (e.g. /sdk). No phone mockup, no aside. *@
+<div class="min-h-screen bg-base-200 flex flex-col">
+    <TopNavbar />
+
+    <main class="grow w-full max-w-3xl mx-auto px-4 py-6">
+        <article class="card bg-base-100 shadow-sm">
+            <div class="card-body">
+                @Body
+            </div>
+        </article>
+    </main>
+</div>
+
+<BlazorErrorUi />

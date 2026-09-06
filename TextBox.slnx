@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/TextBox.Sdk/TextBox.Sdk.csproj" />
     <Project Path="src/TextBox/TextBox.csproj" />
   </Folder>
   <Folder Name="/tests/">

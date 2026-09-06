@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches: [master]
+    tags: ['textbox-sdk-v*']
   pull_request:
     branches: [master]
 
@@ -49,6 +50,16 @@ jobs:
       - name: Test
         run: dotnet test TextBox.slnx --no-build --logger "trx;LogFileName=test-results.trx" --results-directory ./TestResults
 
+      - name: Pack SDK
+        run: dotnet pack src/TextBox.Sdk/TextBox.Sdk.csproj -c Release --nologo
+
+      - name: Upload SDK package
+        uses: actions/upload-artifact@v4
+        with:
+          name: textbox-sdk-nupkg
+          path: 'src/TextBox.Sdk/bin/Release/*.nupkg'
+          if-no-files-found: error
+
       - name: Publish test results
         uses: dorny/test-reporter@v3
         if: success() || failure()
@@ -58,9 +69,41 @@ jobs:
           reporter: dotnet-trx
           fail-on-error: 'true'
 
+  sdk-publish:
+    runs-on: ubuntu-latest
+    needs: build-test
+    # Gated: only runs on textbox-sdk-v* tags (none pushed yet).
+    # Publishes via NuGet trusted publishing (OIDC, no stored API key):
+    # policy owner ParsaG72, repo ParsaGachkar/TextBox, workflow ci.yml.
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/textbox-sdk-v')
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Pack SDK
+        run: dotnet pack src/TextBox.Sdk/TextBox.Sdk.csproj -c Release --nologo
+
+      - name: NuGet login (OIDC → temp key)
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: ParsaG72
+
+      - name: Push to NuGet
+        run: dotnet nuget push "src/TextBox.Sdk/bin/Release/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key "${{ steps.login.outputs.NUGET_API_KEY }}" --skip-duplicate
+
   docker:
     runs-on: ubuntu-latest
     needs: build-test
+    # Branches/PRs only — SDK tag pushes publish the NuGet package, not the image.
+    if: github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/')
     permissions:
       contents: read
       packages: write

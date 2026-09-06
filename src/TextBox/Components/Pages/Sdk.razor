@@ -1,0 +1,50 @@
+@page "/sdk"
+@layout DocsLayout
+@rendermode InteractiveServer
+
+<PageTitle>TextBox SDK</PageTitle>
+
+<h1 class="text-2xl font-bold">.NET SDK</h1>
+<p class="opacity-70">Typed client for the mock SMS API — <code>TextBox.Sdk</code> (<code>netstandard2.0</code>, NSwag-generated).</p>
+
+<h2 class="text-lg font-semibold mt-6">Install</h2>
+<pre class="bg-base-200 rounded-box p-3 text-sm overflow-x-auto">dotnet add package TextBox.Sdk</pre>
+<p class="text-sm opacity-60 mt-2">Not on a feed yet — pack locally (<code>dotnet pack src/TextBox.Sdk -c Release</code>) or use the CI artifact until one is configured.</p>
+
+<h2 class="text-lg font-semibold mt-6">Use (no DI required)</h2>
+<pre class="bg-base-200 rounded-box p-3 text-sm overflow-x-auto">var client = new TextBoxClient(new TextBoxOptions
+{
+    BaseAddress = "http://localhost:8080",
+    ApiKey = "secret-1", // optional: omit when the API is open
+});
+
+var sent = await client.SendAsync(
+    SendSmsRequest.Create("+123", "hello"));
+var inbox = await client.ListAsync();
+var one = await client.GetAsync(sent.Id);
+await client.ClearAsync();</pre>
+
+<h2 class="text-lg font-semibold mt-6">Use (Microsoft DI, optional)</h2>
+<pre class="bg-base-200 rounded-box p-3 text-sm overflow-x-auto">services.AddTextBoxClient(
+    "http://localhost:8080", apiKey: "secret-1");</pre>
+
+<h2 class="text-lg font-semibold mt-6">API key behavior</h2>
+<p class="text-sm opacity-80"><code>POST /api/messages</code> requires the key only when the server has one configured — reads never do. The client sends <code>Authorization: Bearer &lt;key&gt;</code> only when <code>ApiKey</code> is set, so one build works against both open and secured mocks. Without a valid key the API returns <code>401 {"error":"Missing or invalid API key."}</code> (surfaced as <code>TextBoxApiException</code>).</p>
+
+<h2 class="text-lg font-semibold mt-6">Methods</h2>
+<div class="overflow-x-auto">
+    <table class="table table-sm">
+        <thead>
+            <tr><th>Method</th><th>Endpoint</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><code>SendAsync</code></td><td><code>POST /api/messages</code></td></tr>
+            <tr><td><code>ListAsync(to?)</code></td><td><code>GET /api/messages</code></td></tr>
+            <tr><td><code>GetAsync(id)</code></td><td><code>GET /api/messages/{id}</code></td></tr>
+            <tr><td><code>ClearAsync()</code></td><td><code>DELETE /api/messages</code></td></tr>
+        </tbody>
+    </table>
+</div>
+
+<h2 class="text-lg font-semibold mt-6">Reference</h2>
+<p class="text-sm opacity-80">Full HTTP reference at <a href="scalar" target="_blank" rel="noopener" class="link">/scalar</a>. The client is generated from a committed OpenAPI snapshot — see <code>src/TextBox.Sdk/README.md</code> to regenerate after API changes.</p>

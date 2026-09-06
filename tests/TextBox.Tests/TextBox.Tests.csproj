@@ -26,6 +26,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\TextBox\TextBox.csproj" />
+    <ProjectReference Include="..\..\src\TextBox.Sdk\TextBox.Sdk.csproj" />
   </ItemGroup>
 
 </Project>
