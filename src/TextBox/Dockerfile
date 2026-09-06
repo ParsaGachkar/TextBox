@@ -36,16 +36,16 @@ WORKDIR /src/src/TextBox
 RUN npm run build:css && test -f wwwroot/css/app.css
 WORKDIR /src
 # Web project only: tests are compiled and run by CI's build-test job,
-# they don't belong in the runtime image.
+# they don't belong in the runtime image. Separate build + publish steps
+# (both --no-restore): restore stays cached unless a csproj changes, and
+# publish runs its own build so static-web-assets endpoints are generated
+# (plain `publish --no-build` would 404 fingerprinted _framework/* files).
 RUN dotnet build "src/TextBox/TextBox.csproj" -c $BUILD_CONFIGURATION --no-restore
-
-FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "src/TextBox/TextBox.csproj" -c $BUILD_CONFIGURATION -o /app/publish --no-build
+RUN dotnet publish "src/TextBox/TextBox.csproj" -c $BUILD_CONFIGURATION -o /app/publish --no-restore
 
 FROM base AS final
 WORKDIR /app
-COPY --from=publish --chown=$APP_UID /app/publish .
+COPY --from=build --chown=$APP_UID /app/publish .
 # Writable data dir for LiteDB, owned by the app user. A fresh named volume
 # mounted at /app/Data inherits this ownership, so persistence just works.
 RUN mkdir -p /app/Data && chown $APP_UID /app/Data
