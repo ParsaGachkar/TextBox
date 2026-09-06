@@ -103,6 +103,15 @@ dotnet test TextBox.slnx --filter <TestName>
 
 ## Docker
 
+Prebuilt image on GHCR (published from `master` — [package page](https://github.com/ParsaGachkar/TextBox/pkgs/container/textbox)):
+
+```powershell
+docker pull ghcr.io/parsagachkar/textbox:latest
+docker run --rm -p 8080:8080 ghcr.io/parsagachkar/textbox:latest
+```
+
+Or build locally:
+
 ```powershell
 # Build
 docker build -t textbox .
@@ -142,7 +151,7 @@ follow Conventional Commits (enforced on PRs by CI).
 
 Typed client (`TextBox.Sdk`, `netstandard2.0`, NSwag-generated) with full setup at `/sdk`:
 
-> Not published to any feed yet — pack locally or grab the CI artifact until one is configured.
+[![NuGet](https://img.shields.io/nuget/v/TextBox.Sdk.svg)](https://www.nuget.org/packages/TextBox.Sdk)
 
 ```powershell
 dotnet add package TextBox.Sdk

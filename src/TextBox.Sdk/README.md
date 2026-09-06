@@ -4,8 +4,7 @@ Typed .NET client for the [TextBox](https://github.com/ParsaGachkar/TextBox) SMS
 Generated with [NSwag](https://github.com/RicoSuter/NSwag) from the server's OpenAPI document
 (`src/TextBox.Sdk/openapi.json` snapshot); hand-written partials add auth + construction helpers.
 
-> Not published to any feed yet. Pack locally (`dotnet pack src/TextBox.Sdk -c Release`)
-> or consume the CI artifact until a feed is configured.
+[![NuGet](https://img.shields.io/nuget/v/TextBox.Sdk.svg)](https://www.nuget.org/packages/TextBox.Sdk)
 
 <!-- Logo note: nuget.org READMEs only render absolute image URLs and this repo
      has no remote yet. Once it does, point this at the raw logo URL:
