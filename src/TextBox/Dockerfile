@@ -35,7 +35,9 @@ COPY ["tests/TextBox.Tests/", "tests/TextBox.Tests/"]
 WORKDIR /src/src/TextBox
 RUN npm run build:css && test -f wwwroot/css/app.css
 WORKDIR /src
-RUN dotnet build "TextBox.slnx" -c $BUILD_CONFIGURATION --no-restore
+# Web project only: tests are compiled and run by CI's build-test job,
+# they don't belong in the runtime image.
+RUN dotnet build "src/TextBox/TextBox.csproj" -c $BUILD_CONFIGURATION --no-restore
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
