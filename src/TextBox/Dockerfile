@@ -36,12 +36,15 @@ WORKDIR /src/src/TextBox
 RUN npm run build:css && test -f wwwroot/css/app.css
 WORKDIR /src
 # Web project only: tests are compiled and run by CI's build-test job,
-# they don't belong in the runtime image. Separate build + publish steps
-# (both --no-restore): restore stays cached unless a csproj changes, and
-# publish runs its own build so static-web-assets endpoints are generated
+# they don't belong in the runtime image. Separate restore + build + publish
+# steps: the restore layer stays cached unless a csproj changes, while build
+# and publish re-validate restore (a bare `restore slnx` can leave packages
+# downloaded-but-unextracted, which `--no-restore` then fails with NETSDK1064;
+# without the flag MSBuild self-heals and the warm-cache cost is negligible).
+# Publish runs its own build so static-web-assets endpoints are generated
 # (plain `publish --no-build` would 404 fingerprinted _framework/* files).
-RUN dotnet build "src/TextBox/TextBox.csproj" -c $BUILD_CONFIGURATION --no-restore
-RUN dotnet publish "src/TextBox/TextBox.csproj" -c $BUILD_CONFIGURATION -o /app/publish --no-restore
+RUN dotnet build "src/TextBox/TextBox.csproj" -c $BUILD_CONFIGURATION
+RUN dotnet publish "src/TextBox/TextBox.csproj" -c $BUILD_CONFIGURATION -o /app/publish
 
 FROM base AS final
 WORKDIR /app
