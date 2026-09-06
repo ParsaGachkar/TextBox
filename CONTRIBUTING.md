@@ -22,6 +22,7 @@ dotnet test TextBox.slnx               # full suite (xUnit + NSubstitute + bUnit
 dotnet test TextBox.slnx --filter <TestName>
 npm run watch:css --prefix src/TextBox # live CSS rebuilds while doing UI work
 dotnet run --project src/TextBox/TextBox.csproj
+docker build -f src/TextBox/Dockerfile -t textbox . # image (context is the repo root)
 ```
 
 Always specify `TextBox.slnx` explicitly — a legacy `TextBox.sln` also exists

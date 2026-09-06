@@ -113,8 +113,8 @@ docker run --rm -p 8080:8080 ghcr.io/parsagachkar/textbox:latest
 Or build locally:
 
 ```powershell
-# Build
-docker build -t textbox .
+# Build (context is the repo root)
+docker build -f src/TextBox/Dockerfile -t textbox .
 # Run (dashboard at http://localhost:8080, API docs at /scalar)
 docker run --rm -p 8080:8080 textbox
 ```
@@ -188,6 +188,7 @@ TextBox.slnx  # use .slnx (migrated from .sln via `dotnet sln migrate`)
 ├── src/
 │   ├── TextBox/        # Blazor dashboard (/) + SMS mock API (/api/messages)
 │   │   ├── Components/ # Blazor UI (Pages/Home.razor = inbox, Pages/Sdk.razor = SDK docs)
+│   │   ├── Dockerfile  # multi-stage image (base/build/publish/final), context = repo root
 │   │   ├── Endpoints/  # Minimal API (MessageEndpoints)
 │   │   ├── Models/     # SmsMessage / SendSmsRequest
 │   │   └── Services/   # IMessageStore (LiteDB), options, validators
