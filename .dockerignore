@@ -1,14 +1,17 @@
-# Build outputs
-bin/
-obj/
-out/
-TestResults/
+# Build outputs (recursive: bare "obj/" only matches the repo root, so a
+# Windows-built src/TextBox/obj/project.assets.json would leak into the
+# image, overwrite the Linux restore output on COPY, and break the build
+# with NETSDK1064 — see dotnet/sdk#37291).
+**/bin/
+**/obj/
+**/out/
+**/TestResults/
 
 # Frontend install (reinstalled with npm ci during docker build)
-node_modules/
+**/node_modules/
 
-# Local/runtime data
-Data/
+# Local/runtime data (the dev DB lives at src/TextBox/Data/, not the root)
+**/Data/
 *.db
 
 # VCS / CI / IDE
